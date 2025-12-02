@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String    @id @map("_id") @default(auto()) @db.ObjectId
   clerkUserId   String    @unique // clerk user id
   email         String    @unique
   name          String?
@@ -30,11 +30,11 @@ model User {
 }
 
 model Assessment {
-  id            String    @id @default(cuid())
-  userId        String
+  id            String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId        String    @db.ObjectId
   user          User      @relation(fields: [userId], references: [id])
   quizScore     Float     // Overall quiz score
-  questions     Json[]    // Array of {question, answer, userAnswer, isCorrect}
+  questions     Json      // Array of {question, answer, userAnswer, isCorrect}
   category      String    // "Technical", "Behavioral", etc.
   improvementTip String?  // AI-generated improvement tip
   createdAt     DateTime  @default(now())
@@ -44,10 +44,10 @@ model Assessment {
 }
 
 model Resume {
-  id          String    @id @default(cuid())
-  userId      String    @unique    // One resume per user
+  id          String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId      String    @unique @db.ObjectId    // One resume per user
   user        User      @relation(fields: [userId], references: [id])
-  content     String    @db.Text // Markdown content
+  content     String    // Markdown content
   atsScore    Float?
   feedback    String?
   createdAt   DateTime  @default(now())
@@ -55,8 +55,8 @@ model Resume {
 }
 
 model CoverLetter {
-  id              String    @id @default(cuid())
-  userId          String
+  id              String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId          String    @db.ObjectId
   user            User      @relation(fields: [userId], references: [id])
   content         String    // Markdown content
   jobDescription  String?
@@ -71,14 +71,14 @@ model CoverLetter {
 
 // Combined Industry Trends and Salary Insights
 model IndustryInsight {
-  id            String    @id @default(cuid())
+  id            String    @id @map("_id") @default(auto()) @db.ObjectId
   industry      String    @unique  // The industry this data belongs to (e.g., "tech-software-development")
   
   // Users in this industry
   users         User[]
   
   // Salary data
-  salaryRanges  Json[]    // Array of { role: string, min: float, max: float, median: float, location: string? }
+  salaryRanges  Json      // Array of { role: string, min: float, max: float, median: float, location: string? }
   
   // Industry trends
   growthRate    Float     // Industry growth rate
@@ -94,6 +94,4 @@ model IndustryInsight {
   
   lastUpdated   DateTime  @default(now())
   nextUpdate    DateTime  // Scheduled update time
-
-  @@index([industry])
 }
